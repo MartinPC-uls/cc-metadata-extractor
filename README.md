@@ -9,6 +9,9 @@ It extracts the following info from WARC records in CommonCrawl (CC):
 - **Language**: Indicates the language found for the record. It is based on either the server response header (Content-Language, first priority) or the HTML Tag in the content response (second priority).
 
 # How it works
+It extracts the metadata found in every WARC record response and saves it in a CSV File with the fields indicated in the section above.
+
+# Usage
 To run the extractor pipeline, we can look at the following command format:
 ~~~
 python extract_metadata.py <warcpaths> <dest> [--num_responses, --num_workers, --errors_file]
