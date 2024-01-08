@@ -27,3 +27,6 @@ The following example contains a command to extract 100 responses from every WAR
 ~~~
 python extract_metadata.py warc.paths dest --num_responses 100 --num_workers 12 --errors_file errors.txt
 ~~~
+
+
+'test.ipynb' contains an example on how to access the generated metadata in a CSV file.
