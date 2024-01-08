@@ -13,6 +13,15 @@ def get_domain_from_url(url: str):
     return domain
 
 def extract_lang(html: str):
+    """
+    Extracts the HTML Lang Tag if found. Otherwise it returns None.
+
+    Parameters:
+    - html (str): HTML code as string.
+
+    Returns:
+    str: HTML Language.
+    """
     if html == '': return None
 
     soup = BeautifulSoup(html, "html.parser", from_encoding="iso-8859-1")
@@ -25,6 +34,14 @@ def extract_lang(html: str):
     return None
 
 def download(warc_path: str, dest_path='', errors=None):
+    """
+    Downloads a single WARC path and saves it into a destionation folder.
+
+    Parameters:
+    - warc_path (str): WARC path to be downloaded (without base URL).
+    - dest_path (str): Destionation folder to save the WARC record (default is the current directory).
+    - errors (str): File to save the corresponding WARC path if the download failed (default is None, that means no errors file).
+    """
     url = BASE_URL + warc_path
     out = warc_path.split('/')[-1]
     if dest_path != '' and (dest_path[-1] != '/' or dest_path[-1] != '\\'):
@@ -47,6 +64,17 @@ def download(warc_path: str, dest_path='', errors=None):
         print(f'Failed to download file. Status code: {response.status_code}')
 
 def decompress_gz(file_path: str, extract_path: str, remove=False):
+    """
+    Decompress a GZip file.
+
+    Parameters:
+    - file_path (str): File path to extract.
+    - extract_path (str): Path to save the extracted file.
+    - remove (bool): Wether you want to remove the compressed file after decompressing or not (default is False).
+
+    Returns:
+    str: Path to the extracted file.
+    """
     name = file_path.split('/')[-1].removesuffix('.gz')
     output = f'{extract_path}/{name}'
 

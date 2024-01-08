@@ -7,7 +7,18 @@ from itertools import islice
 from warcio.archiveiterator import ArchiveIterator
 
 def get_metadata(warc_path, max_count=0, remove=False):
-    warc = warc_path.split('.')[0].split('/')[-1] # second split in case that is a folder path
+    """
+    Get metadata from a WARC file path.
+
+    Parameters:
+    - warc_path (str): WARC file path to extract the metadata.
+    - max_count (int): Max number of responses to get from a WARC path (default is 0).
+    - remove (bool): Wether you want to remove the .warc file or not.
+
+    Returns:
+    list: The list of records found.
+    """
+    warc = warc_path.split('.')[0].split('/')[-1] # second split in case that it's a folder path
 
     i = 0
     records = []
@@ -36,11 +47,27 @@ def get_metadata(warc_path, max_count=0, remove=False):
     return records
 
 def save_metadata(dest: str, records: list):
+    """
+    Saves the metadata to a CSV file.
+
+    Parameters:
+    - dest (str): Path to save the CSV file.
+    - records (list): List of records found in a WARC path.
+    """
     df = pd.DataFrame(records)
 
     df.to_csv(dest, index=False)
 
 def process(path, dest_path, errors, max_count):
+    """
+    Runs a single pipeline process.
+
+    Parameters:
+    - path (str): Path to the .warc.gz file that contains WARC paths (contained in warc.paths).
+    - dest_path (str): Path to the destionation where you want to save all the process.
+    - errors (str): Path to the errors file.
+    - max_count (int): Max number of responses to get from a WARC path.
+    """
     path = path.strip()
     out = path.split('/')
     name = out[-1].removesuffix('.warc.gz')
@@ -55,6 +82,16 @@ def process(path, dest_path, errors, max_count):
     print(f'Done writing metadata from {name}')
 
 def run_pipeline(paths_file: str, dest_path='', errors=None, max_count=0, num_workers=1):
+    """
+    Runs the whole extraction pipeline.
+
+    Parameters:
+    - paths_file (str): warc.paths file path.
+    - dest_path (str): Destination path to save all the process (defaults to the current directory).
+    - errors (str): Path to the errors file (defaults to None, that means no errors file)
+    - max_count (int): Max number of responses to get from a WARC path (default is 0).
+    - num_workers (int): Number of workers to run the pipeline (default is 1).
+    """
     try:
         with open(paths_file, 'r') as file:
             while True:
