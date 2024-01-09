@@ -28,7 +28,7 @@ def get_metadata(warc_path, max_count=0, remove=False):
             if record.rec_type == 'response':
                 warc_record_id = record.rec_headers.get_header('WARC-Record-ID')
                 warc_target_uri = record.rec_headers.get_header('WARC-Target-URI')
-                content_language = record.http_headers.get_header('Content-Language')
+                content_language = get_header('lang', record.http_headers.headers, exact_match=False)
                 
                 content = record.content_stream().read()
                 records.append({

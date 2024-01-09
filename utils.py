@@ -33,6 +33,33 @@ def extract_lang(html: str):
 
     return None
 
+def get_header(name: str, http_headers, default_value=None, exact_match=True):
+        """
+        Returns a header value (string verification in lower mode).
+
+        Parameters:
+        - name (str): Name of the header
+        - http_headers: HTTP Headers from warcio record.
+        - default_value: If there is no match for a name, this value will be returned.
+        - exact_match (bool): Specify if name must be an exact match
+        """
+
+        # The approach is quite similar to warcio package, although we check either for an
+        # exact match or if name is contained.
+
+        name_lower = name.lower()
+
+        if exact_match:
+            for header, value in http_headers:
+                if name_lower == header.lower():
+                    return value
+        else:
+            for header, value in http_headers:
+                if name_lower in header.lower():
+                    return value
+
+        return default_value
+
 def download(warc_path: str, dest_path='', errors=None):
     """
     Downloads a single WARC path and saves it into a destionation folder.
