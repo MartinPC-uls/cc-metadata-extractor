@@ -55,6 +55,9 @@ def get_header(name: str, http_headers, default_value=None, exact_match=True):
         - http_headers: HTTP Headers from warcio record.
         - default_value: If there is no match for a name, this value will be returned.
         - exact_match (bool): Specify if name must be an exact match
+
+        Returns:
+        str: Value of the found header.
         """
 
         # The approach is quite similar to warcio package, although we check either for an
