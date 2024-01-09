@@ -34,14 +34,17 @@ def get_metadata(warc_path, max_count=0, remove=False):
                 content_language = get_header('lang', record.http_headers.headers, exact_match=False)
                 
                 content = record.content_stream().read()
+
+                extracted_tags = extract_tags(content, ['lang', 'xml:lang', 'dir'])
+
                 records.append({
                     'WARC-File': warc,
                     'WARC-Record-ID': warc_record_id,
                     'WARC-Target-URI': warc_target_uri,
                     'Domain': get_domain_from_url(warc_target_uri).split('.')[-1],
                     'Content-Language': content_language,
-                    'HTML-Language': extract_lang(content),
-                    'HTML-Dir': extract_dir(content)
+                    'HTML-Language': extracted_tags['lang'] or extracted_tags['xml:lang'],
+                    'HTML-Dir': extracted_tags['dir']
                 })
 
                 i += 1

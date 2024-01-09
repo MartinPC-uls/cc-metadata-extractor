@@ -5,8 +5,11 @@ This is a Metadata Extractor for CENIA (Centro Nacional de Inteligencia Artifici
 It extracts the following info from WARC records in CommonCrawl (CC):
 - **WARC-File**: Indicates in which file the record was found.
 - **WARC-Record-ID**: Indicates the Record ID. Using **WET** format we can extract the content of this record by searching in **WARC-Refers-To** field.
+- **WARC-Target-URI**: Indicates the URL from where the record was extracted.
 - **Domain**: Indicates a single domain of the URL where the record was extracted from.
-- **Language**: Indicates the language found for the record. It is based on either the server response header (Content-Language, first priority) or the HTML Tag in the content response (second priority).
+- **Content-Language**: Indicates the language found for the record in the HTTP response.
+- **HTML-Language**: Indicates the language found for the record in the HTML tags (either 'lang' or 'xml:lang').
+- **HTML-Dir**: Indicates the text direction of the text found in the HTML 'dir' tag.
 
 # How it works
 It extracts the metadata found in every WARC record response and saves it in CSV files (per WARC path) with the fields indicated in the section above.
@@ -23,9 +26,9 @@ python extract_metadata.py <warcpaths> <dest> [--num_responses, --num_workers, -
 - **num_workers**: Number of workers to execute the extraction pipeline (default is 1).
 - **errors_file**: File to save the failed WARC paths.
 
-The following example contains a command to extract 100 responses from every WARC record found in 'warc.paths'. It runs with 12 workers (threads), and it saves the failed records in a file called 'errors.txt':
+The following example contains a command to extract 100 responses from every WARC record found in 'warc.paths'. It runs with 4 workers (threads), and it saves the failed records in a file called 'errors.txt'. All CSV files will be saved in a folder called 'dest':
 ~~~
-python extract_metadata.py warc.paths dest --num_responses 100 --num_workers 12 --errors_file errors.txt
+python extract_metadata.py warc.paths dest --num_responses 100 --num_workers 4 --errors_file errors.txt
 ~~~
 
 

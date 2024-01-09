@@ -12,39 +12,28 @@ def get_domain_from_url(url: str):
     domain = parsed_url.netloc
     return domain
 
-def extract_lang(html: str):
+def extract_tags(html: str, tags: list):
     """
-    Extracts the HTML Lang Tag if found. Otherwise it returns None.
+    Extracts the specified HTML tags if found. Otherwise, it returns None.
 
     Parameters:
-    - html (str): HTML code as string.
+    - html (str): HTML code as a string.
+    - tags (list): List of tags to be found.
 
     Returns:
-    str: HTML Language.
+    dict: A dictionary containing the extracted values for each tag.
     """
-    if html == '': return None
+    if html == '' or not tags:
+        return None
 
     soup = BeautifulSoup(html, "html.parser", from_encoding="iso-8859-1")
 
-    lang_tag = soup.find('html', {'lang': True}) or soup.find('html', {'xml:lang': True})
-    return lang_tag.get('lang') or lang_tag.get('xml:lang') if lang_tag else None
+    result_dict = {}
+    for tag in tags:
+        tag_data = soup.find('html', {tag: True})
+        result_dict[tag] = tag_data.get(tag) if tag_data else None
 
-def extract_dir(html: str):
-    """
-    Extracts the HTML Dir Tag if found. Otherwise it returns None.
-
-    Parameters:
-    - html (str): HTML code as string.
-
-    Returns:
-    str: HTML Dir.
-    """
-    if html == '': return None
-
-    soup = BeautifulSoup(html, "html.parser", from_encoding="iso-8859-1")
-
-    dir_tag = soup.find('html', {'dir': True})
-    return dir_tag.get('dir') if dir_tag else None
+    return result_dict
 
 def get_header(name: str, http_headers, default_value=None, exact_match=True):
         """
