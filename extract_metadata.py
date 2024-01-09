@@ -25,7 +25,10 @@ def get_metadata(warc_path, max_count=0, remove=False):
     with open(warc_path, 'rb') as stream:
         for record in ArchiveIterator(stream):
             if i >= max_count and max_count != 0: break
-            if record.rec_type == 'response':
+            if record.rec_type == 'response' and record.content_type == 'application/http; msgtype=response':
+                content_type = record.http_headers.get_header('content-type').replace(';', ' ').split()[0]
+                if content_type not in ['text/html', 'application/xhtml+xml']: continue
+
                 warc_record_id = record.rec_headers.get_header('WARC-Record-ID')
                 warc_target_uri = record.rec_headers.get_header('WARC-Target-URI')
                 content_language = get_header('lang', record.http_headers.headers, exact_match=False)
