@@ -25,13 +25,10 @@ def extract_lang(html: str):
     if html == '': return None
 
     soup = BeautifulSoup(html, "html.parser", from_encoding="iso-8859-1")
-    html_tag = soup.find('html', {'lang': True})
-    
-    if html_tag:
-        lang_value = html_tag['lang']
-        return lang_value
 
-    return None
+    lang_tag = soup.find('html', {'lang': True}) or soup.find('html', {'xml:lang': True})
+    return lang_tag.get('lang') or lang_tag.get('xml:lang') if lang_tag else None
+
 
 def get_header(name: str, http_headers, default_value=None, exact_match=True):
         """

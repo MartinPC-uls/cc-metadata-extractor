@@ -36,7 +36,8 @@ def get_metadata(warc_path, max_count=0, remove=False):
                     'WARC-Record-ID': warc_record_id,
                     'WARC-Target-URI': warc_target_uri,
                     'Domain': get_domain_from_url(warc_target_uri).split('.')[-1],
-                    'Language': extract_lang(content) if content_language is None else content_language
+                    'Content-Language': content_language,
+                    'HTML-Language': extract_lang(content),
                 })
 
                 i += 1
