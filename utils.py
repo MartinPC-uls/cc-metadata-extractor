@@ -2,7 +2,6 @@ import requests
 import gzip
 import shutil
 import os
-from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 
 BASE_URL = 'https://data.commoncrawl.org/'
@@ -12,26 +11,40 @@ def get_domain_from_url(url: str):
     domain = parsed_url.netloc
     return domain
 
-def extract_tags(html: str, tags: list):
+def extract_tags(html_xml, tags: list, charset, default_value=None) -> dict:
     """
-    Extracts the specified HTML tags if found. Otherwise, it returns None.
+    Extract tags from an HTML or XML bytes or string.
+    Internally, it does not parse the HTML or XML, instead it follows a string search to find 
+    the requested tags. Therefore, only the first match for a tag is considered.
 
     Parameters:
-    - html (str): HTML code as a string.
-    - tags (list): List of tags to be found.
+    - html_xml: HTML or XML as bytes or string.
+    - tags (list): Tags to be extracted.
+    - charset: Specific encoding for HTML or XML.
+    - default_value: If a tag is not found, in the returned dictionary save this value in the tag key.
 
     Returns:
-    dict: A dictionary containing the extracted values for each tag.
+    - dict: Dictionary containing the requested tags with their corresponding values.
     """
-    if html == '' or not tags:
-        return None
 
-    soup = BeautifulSoup(html, "html.parser", from_encoding="iso-8859-1")
+    content = html_xml.decode(charset, errors='replace')
 
     result_dict = {}
     for tag in tags:
-        tag_data = soup.find('html', {tag: True})
-        result_dict[tag] = tag_data.get(tag) if tag_data else None
+        search_string = f'{tag}="'
+        index = content.find(search_string)
+
+        if index != -1:
+            buffer = ''
+            end_index = index + len(search_string)
+            for c in content[end_index:]:
+                if c in ['"', '\r', '\n']: break
+                buffer += c
+
+            result_dict[tag] = buffer
+            continue
+
+        result_dict[tag] = default_value
 
     return result_dict
 
@@ -64,6 +77,13 @@ def get_header(name: str, http_headers, default_value=None, exact_match=True):
                     return value
 
         return default_value
+
+def get_warc_header(name: str, warc_headers, default_value=None):
+    for header, value in warc_headers:
+        if name == header:
+            return value
+        
+    return default_value
 
 def download(warc_path: str, dest_path='', errors=None):
     """

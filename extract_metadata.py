@@ -4,7 +4,8 @@ import argparse
 import threading
 from utils import *
 from itertools import islice
-from warcio.archiveiterator import ArchiveIterator
+#from warcio.archiveiterator import ArchiveIterator
+from fastwarc.warc import ArchiveIterator, WarcRecordType
 
 def get_metadata(warc_path, max_count=0, remove=False):
     """
@@ -22,33 +23,36 @@ def get_metadata(warc_path, max_count=0, remove=False):
 
     i = 0
     records = []
+    # TODO Implement FileStream for optimization
     with open(warc_path, 'rb') as stream:
-        for record in ArchiveIterator(stream):
+        for record in ArchiveIterator(stream, record_types=WarcRecordType.response):
             if i >= max_count and max_count != 0: break
-            if record.rec_type == 'response' and record.content_type == 'application/http; msgtype=response':
-                content_type = record.http_headers.get_header('content-type').replace(';', ' ').split()[0]
-                if content_type not in ['text/html', 'application/xhtml+xml']: continue
+            content_type = record.http_content_type
+            if not content_type: continue
 
-                warc_record_id = record.rec_headers.get_header('WARC-Record-ID')
-                warc_target_uri = record.rec_headers.get_header('WARC-Target-URI')
-                content_language = get_header('lang', record.http_headers.headers, exact_match=False)
-                
-                content = record.content_stream().read()
+            content_type = content_type.replace(';', ' ').split()[0]
+            if not content_type or content_type not in ['text/html', 'application/xhtml+xml']: continue
 
-                extracted_tags = extract_tags(content, ['lang', 'xml:lang', 'dir'])
+            warc_record_id = record.record_id
+            warc_target_uri = get_warc_header('WARC-Target-URI', record.headers)
+            content_language = get_header('Content-Language', record.http_headers, exact_match=True)
 
-                records.append({
-                    'WARC-File': warc,
-                    'WARC-Record-ID': warc_record_id,
-                    'WARC-Target-URI': warc_target_uri,
-                    'Domain': get_domain_from_url(warc_target_uri).split('.')[-1],
-                    'Content-Language': content_language,
-                    'HTML-Language': extracted_tags['lang'] or extracted_tags['xml:lang'],
-                    'HTML-Dir': extracted_tags['dir']
-                })
+            content = record.reader.read(200)
 
-                i += 1
-        
+            extracted_tags = extract_tags(content, ['lang', 'dir'], record.http_charset or 'utf-8')
+
+            records.append({
+                'WARC-File': warc,
+                'WARC-Record-ID': warc_record_id,
+                'WARC-Target-URI': warc_target_uri,
+                'Domain': get_domain_from_url(warc_target_uri).split('.')[-1],
+                'Content-Language': content_language,
+                'HTML-Language': extracted_tags['lang'],
+                'HTML-Dir': extracted_tags['dir']
+            })
+
+            i += 1
+
     if remove:
         os.remove(warc_path)
 
