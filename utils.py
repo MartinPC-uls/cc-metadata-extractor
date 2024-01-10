@@ -38,9 +38,10 @@ def extract_tags(html_xml, tags: list, charset, default_value=None) -> dict:
             buffer = ''
             end_index = index + len(search_string)
             for c in content[end_index:]:
-                if c in ['"', '\r', '\n']: break
+                if c in ['"', '\r', '\n', '{', '}', '$', '<', '>', '=', '[', ']', '.', ',']: break
                 buffer += c
 
+            if buffer == 'lang': buffer = ''
             result_dict[tag] = buffer
             continue
 
@@ -94,8 +95,12 @@ def download(warc_path: str, dest_path='', errors=None):
     - dest_path (str): Destionation folder to save the WARC record (default is the current directory).
     - errors (str): File to save the corresponding WARC path if the download failed (default is None, that means no errors file).
     """
+
     url = BASE_URL + warc_path
     out = warc_path.split('/')[-1]
+
+    if os.path.exists(f'{dest_path}/{out}'): return
+
     if dest_path != '' and (dest_path[-1] != '/' or dest_path[-1] != '\\'):
         dest_path = f'{dest_path}/{out}'
     else:

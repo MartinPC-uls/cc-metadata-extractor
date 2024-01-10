@@ -4,7 +4,6 @@ import argparse
 import threading
 from utils import *
 from itertools import islice
-#from warcio.archiveiterator import ArchiveIterator
 from fastwarc.warc import ArchiveIterator, WarcRecordType
 
 def get_metadata(warc_path, max_count=0, remove=False):
@@ -23,7 +22,6 @@ def get_metadata(warc_path, max_count=0, remove=False):
 
     i = 0
     records = []
-    # TODO Implement FileStream for optimization
     with open(warc_path, 'rb') as stream:
         for record in ArchiveIterator(stream, record_types=WarcRecordType.response):
             if i >= max_count and max_count != 0: break
@@ -70,7 +68,7 @@ def save_metadata(dest: str, records: list):
 
     df.to_csv(dest, index=False)
 
-def process(path, dest_path, errors, max_count):
+def process(path, dest_path, errors, max_count, decompression=True):
     """
     Runs a single pipeline process.
 
@@ -82,18 +80,26 @@ def process(path, dest_path, errors, max_count):
     """
     path = path.strip()
     out = path.split('/')
-    name = out[-1].removesuffix('.warc.gz')
-    print(f'Downloading {out[-1]}...')
+    file = out[-1]
+    name = file.removesuffix('.warc.gz')
+
+    print(f'Downloading {file}...')
     download(path, dest_path, errors)
-    print(f'Decompressing {out[-1]}...')
-    new_file = decompress_gz(f'{dest_path}/{out[-1]}', extract_path=dest_path, remove=True)
+
+    new_file = None
+    if decompression:
+        print(f'Decompressing {file}...')
+        new_file = decompress_gz(f'{dest_path}/{file}', extract_path=dest_path, remove=True)
+    
     print(f'Getting metadata from {name}...')
-    records = get_metadata(new_file, max_count=max_count, remove=True)
+    records = get_metadata(new_file or f'{dest_path}/{file}', max_count=max_count, remove=True)
+
     print(f'Saving metadata from {name}...')
     save_metadata(f'{dest_path}/{name}.csv', records)
+
     print(f'Done writing metadata from {name}')
 
-def run_pipeline(paths_file: str, dest_path='', errors=None, max_count=0, num_workers=1):
+def run_pipeline(paths_file: str, dest_path='', errors=None, max_count=0, num_workers=1, decompression=True):
     """
     Runs the whole extraction pipeline.
 
@@ -112,7 +118,7 @@ def run_pipeline(paths_file: str, dest_path='', errors=None, max_count=0, num_wo
 
                 workers = []
                 for line in batch:
-                    worker = threading.Thread(target=process, args=(line, dest_path, errors, max_count))
+                    worker = threading.Thread(target=process, args=(line, dest_path, errors, max_count, decompression))
                     workers.append(worker)
                     worker.start()
 
@@ -129,6 +135,7 @@ if __name__ == "__main__":
     parser.add_argument('--num_responses', help='Number of responses to save per record (default is no limit).', required=False)
     parser.add_argument('--num_workers', help='Number of workers to process the pipeline (default is 1).', required=False)
     parser.add_argument('--errors_file', help='File to save which files failed while processing.', required=False)
+    parser.add_argument('--without_decompression', help='Removes decompression from pipeline.', action='store_true')
 
     args = parser.parse_args()
 
@@ -137,5 +144,7 @@ if __name__ == "__main__":
     num_responses = int(args.num_responses) if args.num_responses != None else 0
     num_workers = int(args.num_workers) if args.num_workers != None else 1
     errors_file = args.errors_file
+    without_decompression = args.without_decompression
 
-    run_pipeline(warcpaths, dest_path=dest, errors=errors_file, max_count=num_responses, num_workers=num_workers)
+    run_pipeline(warcpaths, dest_path=dest, errors=errors_file, max_count=num_responses,
+                 num_workers=num_workers, decompression=not without_decompression)
