@@ -83,6 +83,10 @@ def process(path, dest_path, errors, max_count, decompression=True):
     file = out[-1]
     name = file.removesuffix('.warc.gz')
 
+    if os.path.exists(f'{dest_path}/{name}.csv'):
+        print(f'Skipping process for {name} since it already exists.')
+        return
+
     print(f'Downloading {file}...')
     download(path, dest_path, errors)
 
