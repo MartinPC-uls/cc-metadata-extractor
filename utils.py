@@ -38,7 +38,7 @@ def extract_tags(html_xml, tags: list, charset, default_value=None) -> dict:
             buffer = ''
             end_index = index + len(search_string)
             for c in content[end_index:]:
-                if c in {'"', '\r', '\n', '{', '}', '$', '<', '>', '=', '[', ']', '.', ','}: break
+                if c in {'"', '\r', '\n', '{', '}', '$', '<', '>', '=', '[', ']', '.', ',', '”'}: break
                 buffer += c
 
             if buffer == 'lang': buffer = ''
