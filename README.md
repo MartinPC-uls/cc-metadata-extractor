@@ -17,7 +17,7 @@ It extracts the metadata found in every WARC record response and saves it in CSV
 # Usage
 To run the extractor pipeline, we can look at the following command format:
 ~~~
-python extract_metadata.py <warcpaths> <dest> [--num_responses, --num_workers, --errors_file]
+python extract_metadata.py <warcpaths> <dest> [--num_responses, --num_workers, --errors_file, --without_decompression]
 ~~~
 
 - **warcpaths** (REQUIRED): 'warc.paths' file extracted from https://data.commoncrawl.org/crawl-data/CC-MAIN-2023-50/index.html (or any other crawl-data version)
@@ -25,6 +25,7 @@ python extract_metadata.py <warcpaths> <dest> [--num_responses, --num_workers, -
 - **num_responses**: Number of responses to get from a single WARC path (by default, there is no limit).
 - **num_workers**: Number of workers to execute the extraction pipeline (default is 1).
 - **errors_file**: File to save the failed WARC paths.
+- **without_decompression**: Disables decompression. Everything will be processed on the fly (metadata extraction will be slower, but it removes the decompression time).
 
 The following example contains a command to extract 100 responses from every WARC record found in 'warc.paths'. It runs with 4 workers (threads), and it saves the failed records in a file called 'errors.txt'. All CSV files will be saved in a folder called 'dest':
 ~~~
