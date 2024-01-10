@@ -29,7 +29,7 @@ def get_metadata(warc_path, max_count=0, remove=False):
             if not content_type: continue
 
             content_type = content_type.replace(';', ' ').split()[0]
-            if not content_type or content_type not in ['text/html', 'application/xhtml+xml']: continue
+            if not content_type or content_type not in {'text/html', 'application/xhtml+xml'}: continue
 
             warc_record_id = record.record_id
             warc_target_uri = get_warc_header('WARC-Target-URI', record.headers)
