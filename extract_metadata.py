@@ -1,10 +1,10 @@
 import pandas as pd
 import os
 import argparse
-import threading
 from utils import *
 from itertools import islice
 from fastwarc.warc import ArchiveIterator, WarcRecordType
+from concurrent.futures import ThreadPoolExecutor
 
 def get_metadata(warc_path, max_count=0, remove=False):
     """
@@ -120,13 +120,14 @@ def run_pipeline(paths_file: str, dest_path='', errors=None, max_count=0, num_wo
                 batch = list(islice(file, num_workers))
                 if not batch: break
 
-                workers = []
-                for line in batch:
-                    worker = threading.Thread(target=process, args=(line, dest_path, errors, max_count, decompression))
-                    workers.append(worker)
-                    worker.start()
+                with ThreadPoolExecutor(max_workers=num_workers) as executor:
+                    features = {executor.submit(process, line, dest_path, errors, max_count, decompression) for line in batch}
 
-                for work in workers: work.join()
+                    for future in features:
+                        try:
+                            future.result()
+                        except Exception as e:
+                            print(f"Error: {e}")
     except Exception as e:
         print(f'[Pipeline] An error ocurred: {e}')
 
