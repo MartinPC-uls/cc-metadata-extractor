@@ -6,6 +6,19 @@ from urllib.parse import urlparse
 
 BASE_URL = 'https://data.commoncrawl.org/'
 
+invalid_chars = {
+    '"', '\r', '\n', '{', '}',
+    '$', '<', '>', '=', '[', ']',
+    '.', ',', '”', '/', '\\', ' '
+}
+
+# source: https://html.spec.whatwg.org/multipage/dom.html#the-dir-attribute
+# 'auto' is not beign considered since it cannot be inferred in HTML text
+valid_dir = {'ltr', 'rtl'}
+
+# TODO
+# valid_lang = {}
+
 def get_domain_from_url(url: str):
     parsed_url = urlparse(url)
     domain = parsed_url.netloc
@@ -38,10 +51,14 @@ def extract_tags(html_xml, tags: list, charset, default_value=None) -> dict:
             buffer = ''
             end_index = index + len(search_string)
             for c in content[end_index:]:
-                if c in {'"', '\r', '\n', '{', '}', '$', '<', '>', '=', '[', ']', '.', ',', '”'}: break
+                if c in invalid_chars: break
                 buffer += c
 
-            if buffer == 'lang': buffer = ''
+            if buffer in {'lang', 'dir'}: buffer = default_value
+
+            if tag == 'dir' and buffer not in valid_dir: buffer = default_value
+            # TODO check for language
+
             result_dict[tag] = buffer
             continue
 
@@ -145,4 +162,3 @@ def decompress_gz(file_path: str, extract_path: str, remove=False):
         return output
     except Exception as e:
         print(f'[Decompression] An error ocurred: {e}')
-
