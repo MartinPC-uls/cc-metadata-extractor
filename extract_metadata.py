@@ -90,7 +90,7 @@ def process(path, dest_path, errors, max_count, decompression=True):
         return
 
     if VERBOSE: print(f'Downloading {file}...')
-    download(path, dest_path, errors, VERBOSE)
+    download(path, dest_path, errors, verbose=VERBOSE)
 
     new_file = None
     if decompression:
@@ -105,8 +105,6 @@ def process(path, dest_path, errors, max_count, decompression=True):
 
     if VERBOSE: print(f'Done writing metadata from {name}')
 
-    print()
-
 def run_pipeline(paths_file: str, dest_path='', errors=None, max_count=0, num_workers=1, decompression=True):
     """
     Runs the whole extraction pipeline.
@@ -120,6 +118,7 @@ def run_pipeline(paths_file: str, dest_path='', errors=None, max_count=0, num_wo
     """
     try:
         with open(paths_file, 'r') as file:
+            completed = 0
             while True:
                 batch = list(islice(file, num_workers))
                 if not batch: break
@@ -130,6 +129,8 @@ def run_pipeline(paths_file: str, dest_path='', errors=None, max_count=0, num_wo
                     for future in features:
                         try:
                             future.result()
+                            completed += 1
+                            print(f'Progress: {completed}/90000')
                         except Exception as e:
                             print(f"Error: {e}")
     except Exception as e:
