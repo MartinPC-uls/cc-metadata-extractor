@@ -103,7 +103,7 @@ def get_warc_header(name: str, warc_headers, default_value=None):
         
     return default_value
 
-def download(warc_path: str, dest_path='', errors=None):
+def download(warc_path: str, dest_path='', errors=None, verbose=False):
     """
     Downloads a single WARC path and saves it into a destionation folder.
 
@@ -129,7 +129,7 @@ def download(warc_path: str, dest_path='', errors=None):
         with open(dest_path, 'wb') as file:
             file.write(response.content)
         file.close()
-        print(f'File downloaded successfully to {dest_path}')
+        if verbose: print(f'File downloaded successfully to {dest_path}')
     else:
         if errors != None:
             with open(errors, 'a') as file:

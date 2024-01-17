@@ -6,6 +6,8 @@ from itertools import islice
 from fastwarc.warc import ArchiveIterator, WarcRecordType
 from concurrent.futures import ThreadPoolExecutor
 
+VERBOSE = False
+
 def get_metadata(warc_path, max_count=0, remove=False):
     """
     Get metadata from a WARC file path.
@@ -84,24 +86,26 @@ def process(path, dest_path, errors, max_count, decompression=True):
     name = file.removesuffix('.warc.gz')
 
     if os.path.exists(f'{dest_path}/{name}.csv'):
-        print(f'Skipping process for {name} since it already exists.')
+        #print(f'Skipping process for {name} since it already exists.')
         return
 
-    print(f'Downloading {file}...')
-    download(path, dest_path, errors)
+    if VERBOSE: print(f'Downloading {file}...')
+    download(path, dest_path, errors, VERBOSE)
 
     new_file = None
     if decompression:
-        print(f'Decompressing {file}...')
+        if VERBOSE: print(f'Decompressing {file}...')
         new_file = decompress_gz(f'{dest_path}/{file}', extract_path=dest_path, remove=True)
     
-    print(f'Getting metadata from {name}...')
+    if VERBOSE: print(f'Getting metadata from {name}...')
     records = get_metadata(new_file or f'{dest_path}/{file}', max_count=max_count, remove=True)
 
-    print(f'Saving metadata from {name}...')
+    if VERBOSE: print(f'Saving metadata from {name}...')
     save_metadata(f'{dest_path}/{name}.csv', records)
 
-    print(f'Done writing metadata from {name}')
+    if VERBOSE: print(f'Done writing metadata from {name}')
+
+    print()
 
 def run_pipeline(paths_file: str, dest_path='', errors=None, max_count=0, num_workers=1, decompression=True):
     """
@@ -141,6 +145,7 @@ if __name__ == "__main__":
     parser.add_argument('--num_workers', help='Number of workers to process the pipeline (default is 1).', required=False)
     parser.add_argument('--errors_file', help='File to save which files failed while processing.', required=False)
     parser.add_argument('--without_decompression', help='Removes decompression from pipeline.', action='store_true')
+    parser.add_argument('--verbose', help='Activates verbose mode.', action='store_true')
 
     args = parser.parse_args()
 
@@ -150,6 +155,7 @@ if __name__ == "__main__":
     num_workers = int(args.num_workers) if args.num_workers != None else 1
     errors_file = args.errors_file
     without_decompression = args.without_decompression
+    VERBOSE = args.verbose
 
     run_pipeline(warcpaths, dest_path=dest, errors=errors_file, max_count=num_responses,
                  num_workers=num_workers, decompression=not without_decompression)
