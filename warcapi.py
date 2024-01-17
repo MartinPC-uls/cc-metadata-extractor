@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import operator
 from utils import *
 from fastwarc.warc import ArchiveIterator
 
@@ -29,6 +30,12 @@ def _get_paths(paths_file: str) -> dict:
     return _dict
 
 wet_dict = _get_paths('wet.paths')
+
+comparison_func = {
+    '==': operator.eq,
+    '!=': operator.ne,
+    'in': operator.contains
+}
 
 class WARCChunk:
     def __init__(self, csv_warc_chunk: str, ignore_errors=False):
@@ -89,3 +96,50 @@ class WARCChunk:
     def get(self, query: str, frac=1) -> list:
         return self.warc_df.query(query).sample(frac=frac).index.tolist()
     
+    def save(self, query: str, dest_folder: str, sample=1, filters=None):
+        dest = f'{dest_folder}/{self.chunk_name}.csv'
+
+        records = self.get(query, sample)
+
+        data = []
+        for record in records:
+            if filters is not None and not all(f(record) for f in filters):
+                continue
+
+            data.append({
+                'WARC-File': self.chunk_name,
+                'WARC-Record-ID': record,
+                'Text': self.get_text(record),
+                'WARC-Target-URI': self.get_metadata(record, 'WARC-Target-URI'),
+                'Content-Language': self.get_metadata(record, 'Content-Language'),
+                'HTML-Lang': self.get_metadata(record, 'HTML-Lang'),
+                'HTML-Dir': self.get_metadata(record, 'HTML-Dir'),
+                'Domain': self.get_metadata(record, 'Domain')
+            })
+            
+        df = pd.DataFrame(data)
+        df.to_csv(dest, index=False)
+
+    def filter_metadata(self, record, metadata, target, operator_type='=='):
+        comparison_func.get(operator_type)
+
+        if comparison_func is None:
+            raise ValueError("Invalid operator_type. Supported values are '==', '!=' and 'in'.")
+
+        _metadata = self.get_metadata(record, metadata)
+        return comparison_func(target, _metadata)
+    
+    
+    def filter_text(self, record, target, operator_type='==', sensitive=True):
+        comparison_func.get(operator_type)
+
+        if comparison_func is None:
+            raise ValueError("Invalid operator_type. Supported values are '==', '!=' and 'in'.")
+        
+        text = self.get_text(record)
+
+        if sensitive:
+            return comparison_func(target, text)
+                    
+        return comparison_func(target.lower(), text.lower())
+        
