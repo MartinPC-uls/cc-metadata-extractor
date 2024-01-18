@@ -30,7 +30,7 @@ def get_text(wet_path, max_count=0, remove=False):
             print(f'"{path}" was not found. Finishing process...')
             exit()
         
-        _records = pd.read_csv(path, index_col='WARC-Record-ID')
+        _records = pd.read_csv(path, index_col='WARC_Record_ID')
 
     i = 0
     records = []
@@ -49,15 +49,15 @@ def get_text(wet_path, max_count=0, remove=False):
                 content_language = get_warc_header('WARC-Identified-Content-Language', record.headers)
 
                 records.append({
-                    'WARC-File': wet,
-                    'WARC-Record-ID': warc_record_id,
-                    'WARC-Refers-To': warc_refers_to,
-                    'WARC-Identified-Content-Language': content_language,
+                    'WARC_File': wet,
+                    'WARC_Record_ID': warc_record_id,
+                    'WARC_Refers_To': warc_refers_to,
+                    'WARC_Identified_Content_Language': content_language,
                     'Content': content
                 })
             else:
                 try:
-                    lang = _records.at[warc_refers_to, 'HTML-Language']
+                    lang = _records.at[warc_refers_to, 'HTML_Language']
                     print(f'"{content[:20]}" --> {lang}')
                 except KeyError:
                     print('Key error')
@@ -156,7 +156,7 @@ if __name__ == "__main__":
     parser.add_argument('--num_workers', help='Number of workers to process the pipeline (default is 1).', required=False)
     parser.add_argument('--errors_file', help='File to save which files failed while processing.', required=False)
     parser.add_argument('--without_decompression', help='Removes decompression from pipeline.', action='store_true')
-    parser.add_argument('--test', help='Activates test mode. This option disables saving and only check if WARC-Refers-To fields (WET) match WARC-Record-ID in WARC files. Requires a path folder containing WARC CSV files.', required=False)
+    parser.add_argument('--test', help='Activates test mode. This option disables saving and only check if WARC_Refers_To fields (WET) match WARC-Record-ID in WARC files. Requires a path folder containing WARC CSV files.', required=False)
 
     args = parser.parse_args()
 

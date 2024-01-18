@@ -41,7 +41,7 @@ class WARCChunk:
     def __init__(self, csv_warc_chunk: str, ignore_errors=False):
         self.chunk = csv_warc_chunk
         self.chunk_name = csv_warc_chunk.split('/')[-1].split('\\')[-1].removesuffix('.csv')
-        self.warc_df = pd.read_csv(csv_warc_chunk, index_col='WARC-Record-ID')
+        self.warc_df = pd.read_csv(self.chunk, index_col='WARC_Record_ID')
         self.ignore_errors = ignore_errors
         self.wet_df = None
         self._load()
@@ -58,20 +58,20 @@ class WARCChunk:
         records = []
         with open(file, 'rb') as stream:
             for record in ArchiveIterator(stream):
-                content_type = get_warc_header('Content-Type', record.headers)
+                content_type = get_warc_header('Content_Type', record.headers)
                 if not content_type: continue
                 if content_type != 'text/plain': continue
 
-                warc_refers_to = get_warc_header('WARC-Refers-To', record.headers)
+                warc_refers_to = get_warc_header('WARC_Refers_To', record.headers)
                 content = record.reader.read().decode('utf-8', errors='replace')
 
                 records.append({
-                    'WARC-Refers-To': warc_refers_to,
+                    'WARC_Refers_To': warc_refers_to,
                     'Content': content
                 })
 
         self.wet_df = pd.DataFrame(records)
-        self.wet_df.set_index('WARC-Refers-To', inplace=True)
+        self.wet_df.set_index('WARC_Refers_To', inplace=True)
 
         os.remove(file)
     
@@ -93,10 +93,13 @@ class WARCChunk:
             
             return default_value
         
-    def get(self, query: str, frac=1) -> list:
+    def get(self, query=None, frac=1) -> list:
+        if query is None:
+            return self.warc_df.sample(frac=frac).index.tolist()
+        
         return self.warc_df.query(query).sample(frac=frac).index.tolist()
     
-    def save(self, query: str, dest_folder: str, sample=1, filters=None):
+    def save(self, dest_folder = '.', query=None, sample=1, filters=None):
         dest = f'{dest_folder}/{self.chunk_name}.csv'
 
         records = self.get(query, sample)
@@ -107,13 +110,13 @@ class WARCChunk:
                 continue
 
             data.append({
-                'WARC-File': self.chunk_name,
-                'WARC-Record-ID': record,
+                'WARC_File': self.chunk_name,
+                'WARC_Record_ID': record,
                 'Text': self.get_text(record),
-                'WARC-Target-URI': self.get_metadata(record, 'WARC-Target-URI'),
-                'Content-Language': self.get_metadata(record, 'Content-Language'),
-                'HTML-Lang': self.get_metadata(record, 'HTML-Lang'),
-                'HTML-Dir': self.get_metadata(record, 'HTML-Dir'),
+                'WARC_Target_URI': self.get_metadata(record, 'WARC_Target_URI'),
+                'Content_Language': self.get_metadata(record, 'Content_Language'),
+                'HTML_Lang': self.get_metadata(record, 'HTML_Lang'),
+                'HTML_Dir': self.get_metadata(record, 'HTML_Dir'),
                 'Domain': self.get_metadata(record, 'Domain')
             })
             
