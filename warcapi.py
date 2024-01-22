@@ -58,11 +58,11 @@ class WARCChunk:
         records = []
         with open(file, 'rb') as stream:
             for record in ArchiveIterator(stream):
-                content_type = get_warc_header('Content_Type', record.headers)
+                content_type = get_warc_header('Content-Type', record.headers)
                 if not content_type: continue
                 if content_type != 'text/plain': continue
 
-                warc_refers_to = get_warc_header('WARC_Refers_To', record.headers)
+                warc_refers_to = get_warc_header('WARC-Refers-To', record.headers)
                 content = record.reader.read().decode('utf-8', errors='replace')
 
                 records.append({
